@@ -522,7 +522,9 @@ actual class LocalSource(
 
                 // Copy ComicInfo.xml from chapter archive to top level if found
                 noXmlFile == null -> {
-                    val chapterArchives = mangaDirFiles.filter(Archive::isSupported)
+                    val chapterArchives = mangaDirFiles
+                        .filter(Archive::isSupported)
+                        .toList()
 
                     val copiedFile = copyComicInfoFileFromArchive(chapterArchives, mangaDir)
                     if (copiedFile != null) {
@@ -660,8 +662,8 @@ actual class LocalSource(
         try {
             val (mangaDirName, chapterName) = chapter.url.split('/', limit = 2)
             return fileSystem.getBaseDirectory()
-                ?.findFile(mangaDirName)
-                ?.findFile(chapterName)
+                ?.findFile(mangaDirName, true)
+                ?.findFile(chapterName, true)
                 ?.let(Format.Companion::valueOf)
                 ?: throw Exception(context.stringResource(MR.strings.chapter_not_found))
         } catch (e: Format.UnknownFormatException) {
