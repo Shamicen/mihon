@@ -74,9 +74,9 @@ actual class LocalSource(
 
     private val mangaRepository: MangaRepository by injectLazy()
 
-    private var localManga: List<SManga> = emptyList()
+    private var localManga: MutableList<List<SManga>> = mutableListOf()
 
-    private val mangaChunks: List<List<UniFile>> by lazy {
+    private var mangaChunks: List<List<UniFile>> =
         fileSystem.getFilesInBaseDirectory()
             // Filter out files that are hidden and is not a folder
             .asSequence()
@@ -86,7 +86,6 @@ actual class LocalSource(
             .toList()
             .chunked(MANGA_LOADING_CHUNK_SIZE)
             .toList()
-    }
 
     private var loadedPages = 0
     private var currentlyLoadingPage: Int? = null
@@ -106,6 +105,33 @@ actual class LocalSource(
     override fun toString() = name
 
     override val supportsLatest: Boolean = true
+
+    private fun checkForNewManga() {
+        if (!allMangaLoaded || currentlyLoadingPage != null) return
+
+        val newManga = fileSystem.getFilesInBaseDirectory()
+            // Filter out files that are hidden and is not a folder
+            .asSequence()
+            .filter { it.isDirectory && it.name?.startsWith('.') == false }
+            .filterNot { mangaDir -> mangaChunks.flatten().map { it.name }.contains(mangaDir.name) }
+            .distinctBy { it.name }
+            .sortedBy { it.lastModified() }
+            .toList()
+
+        if (newManga.isNotEmpty()) {
+            mangaChunks = mangaChunks
+                .flatten()
+                .plus(newManga)
+                .distinctBy { it.name }
+                .chunked(MANGA_LOADING_CHUNK_SIZE)
+
+            allMangaLoaded = false
+            if (localManga.last().size % MANGA_LOADING_CHUNK_SIZE != 0) {
+                localManga = localManga.dropLast(1).toMutableList()
+                loadedPages--
+            }
+        }
+    }
 
     private fun loadMangaForPage(page: Int) {
         if (page != loadedPages + 1) return
@@ -157,7 +183,7 @@ actual class LocalSource(
             }
         }.toList()
 
-        localManga = localManga.plus(mangaPage)
+        localManga.add(mangaPage)
         loadedPages++
         currentlyLoadingPage = null
     }
@@ -179,6 +205,7 @@ actual class LocalSource(
     }
 
     override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage = withIOContext {
+        if (page == 1) checkForNewManga()
         loadMangaForPage(page)
 
         while (page == currentlyLoadingPage) {
@@ -296,7 +323,7 @@ actual class LocalSource(
             }
         }
 
-        includedManga = localManga.filter { manga ->
+        includedManga = localManga.flatten().filter { manga ->
             (manga.title.contains(query, ignoreCase = true) || File(manga.url).name.contains(query, ignoreCase = true)) &&
                 areAllElementsInMangaEntry(includedGenres, manga.genre) &&
                 areAllElementsInMangaEntry(includedAuthors, manga.author) &&
@@ -310,7 +337,7 @@ actual class LocalSource(
             includedArtists.isEmpty() &&
             includedStatuses.isEmpty()
         ) {
-            includedManga = localManga.toMutableList()
+            includedManga = localManga.flatten().toMutableList()
             isFilteredSearch = false
         } else {
             isFilteredSearch = true
@@ -608,13 +635,13 @@ actual class LocalSource(
 
     // Filters
     override fun getFilterList(): FilterList {
-        val genres = localManga.mapNotNull { it.genre?.split(",") }
+        val genres = localManga.flatten().mapNotNull { it.genre?.split(",") }
             .flatMap { it.map { genre -> genre.trim() } }.toSet()
 
-        val authors = localManga.mapNotNull { it.author?.split(",") }
+        val authors = localManga.flatten().mapNotNull { it.author?.split(",") }
             .flatMap { it.map { author -> author.trim() } }.toSet()
 
-        val artists = localManga.mapNotNull { it.artist?.split(",") }
+        val artists = localManga.flatten().mapNotNull { it.artist?.split(",") }
             .flatMap { it.map { artist -> artist.trim() } }.toSet()
 
         val filters = try {
