@@ -27,6 +27,7 @@ object MangaMapper {
         updateStrategy: UpdateStrategy,
         calculateInterval: Long,
         lastModifiedAt: Long,
+        lastModifiedAtLocal: Long?,
         favoriteModifiedAt: Long?,
         version: Long,
         @Suppress("UNUSED_PARAMETER")
@@ -53,6 +54,7 @@ object MangaMapper {
         updateStrategy = updateStrategy,
         initialized = initialized,
         lastModifiedAt = lastModifiedAt,
+        lastModifiedAtLocal = lastModifiedAtLocal,
         favoriteModifiedAt = favoriteModifiedAt,
         version = version,
     )
@@ -79,6 +81,7 @@ object MangaMapper {
         updateStrategy: UpdateStrategy,
         calculateInterval: Long,
         lastModifiedAt: Long,
+        lastModifiedAtLocal: Long?,
         favoriteModifiedAt: Long?,
         version: Long,
         isSyncing: Long,
@@ -112,6 +115,7 @@ object MangaMapper {
             updateStrategy,
             calculateInterval,
             lastModifiedAt,
+            lastModifiedAtLocal,
             favoriteModifiedAt,
             version,
             isSyncing,

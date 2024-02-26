@@ -22,7 +22,7 @@ interface SManga : Serializable {
 
     var thumbnail_url: String?
 
-    var lastModified: Long?
+    var lastModifiedAtLocal: Long?
 
     var update_strategy: UpdateStrategy
 
