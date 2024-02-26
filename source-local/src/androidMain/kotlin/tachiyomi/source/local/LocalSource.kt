@@ -74,7 +74,7 @@ actual class LocalSource(
 
     private val mangaRepository: MangaRepository by injectLazy()
 
-    private var localManga: MutableList<List<SManga>> = mutableListOf()
+    private var localMangaChunks: MutableList<List<SManga>> = mutableListOf()
 
     private var mangaChunks: List<List<UniFile>> =
         fileSystem.getFilesInBaseDirectory()
@@ -84,7 +84,7 @@ actual class LocalSource(
             .distinctBy { it.name }
             .sortedBy { it.name }
             .toList()
-            .chunked(MANGA_LOADING_CHUNK_SIZE)
+            .chunked(CHUNK_SIZE)
             .toList()
 
     private var loadedPages = 0
@@ -113,7 +113,7 @@ actual class LocalSource(
             // Filter out files that are hidden and is not a folder
             .asSequence()
             .filter { it.isDirectory && it.name?.startsWith('.') == false }
-            .filterNot { mangaDir -> mangaChunks.flatten().map { it.name }.contains(mangaDir.name) }
+            .filterNot { mangaDir -> mangaChunks.flatten().map { it }.contains(mangaDir) }
             .distinctBy { it.name }
             .sortedBy { it.lastModified() }
             .toList()
@@ -123,11 +123,11 @@ actual class LocalSource(
                 .flatten()
                 .plus(newManga)
                 .distinctBy { it.name }
-                .chunked(MANGA_LOADING_CHUNK_SIZE)
+                .chunked(CHUNK_SIZE)
 
             allMangaLoaded = false
-            if (localManga.last().size % MANGA_LOADING_CHUNK_SIZE != 0) {
-                localManga = localManga.dropLast(1).toMutableList()
+            if (localMangaChunks.last().size % CHUNK_SIZE != 0) {
+                localMangaChunks = localMangaChunks.dropLast(1).toMutableList()
                 loadedPages--
             }
         }
@@ -183,7 +183,7 @@ actual class LocalSource(
             }
         }.toList()
 
-        localManga.add(mangaPage)
+        localMangaChunks.add(mangaPage)
         loadedPages++
         currentlyLoadingPage = null
     }
@@ -323,7 +323,7 @@ actual class LocalSource(
             }
         }
 
-        includedManga = localManga.flatten().filter { manga ->
+        includedManga = localMangaChunks.flatten().filter { manga ->
             (manga.title.contains(query, ignoreCase = true) || File(manga.url).name.contains(query, ignoreCase = true)) &&
                 areAllElementsInMangaEntry(includedGenres, manga.genre) &&
                 areAllElementsInMangaEntry(includedAuthors, manga.author) &&
@@ -337,7 +337,7 @@ actual class LocalSource(
             includedArtists.isEmpty() &&
             includedStatuses.isEmpty()
         ) {
-            includedManga = localManga.flatten().toMutableList()
+            includedManga = localMangaChunks.flatten().toMutableList()
             isFilteredSearch = false
         } else {
             isFilteredSearch = true
@@ -451,7 +451,7 @@ actual class LocalSource(
 
         val mangaPageList =
             if (includedManga.isNotEmpty()) {
-                includedManga.toList().chunked(MANGA_LOADING_CHUNK_SIZE)
+                includedManga.toList().chunked(CHUNK_SIZE)
             } else {
                 listOf(emptyList())
             }
@@ -635,13 +635,13 @@ actual class LocalSource(
 
     // Filters
     override fun getFilterList(): FilterList {
-        val genres = localManga.flatten().mapNotNull { it.genre?.split(",") }
+        val genres = localMangaChunks.flatten().mapNotNull { it.genre?.split(",") }
             .flatMap { it.map { genre -> genre.trim() } }.toSet()
 
-        val authors = localManga.flatten().mapNotNull { it.author?.split(",") }
+        val authors = localMangaChunks.flatten().mapNotNull { it.author?.split(",") }
             .flatMap { it.map { author -> author.trim() } }.toSet()
 
-        val artists = localManga.flatten().mapNotNull { it.artist?.split(",") }
+        val artists = localMangaChunks.flatten().mapNotNull { it.artist?.split(",") }
             .flatMap { it.map { artist -> artist.trim() } }.toSet()
 
         val filters = try {
@@ -741,7 +741,7 @@ actual class LocalSource(
         const val ID = 0L
         const val HELP_URL = "https://mihon.app/docs/guides/local-source/"
 
-        private const val MANGA_LOADING_CHUNK_SIZE = 10
+        private const val CHUNK_SIZE = 10
     }
 }
 
