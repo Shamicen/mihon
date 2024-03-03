@@ -126,7 +126,7 @@ class MangaRestorer(
                 coverLastModified = manga.coverLastModified,
                 dateAdded = manga.dateAdded,
                 mangaId = manga.id,
-                lastModifiedAtLocal = manga.lastModifiedAtLocal,
+                dirLastModifiedAt = manga.dirLastModifiedAt,
                 updateStrategy = manga.updateStrategy.let(UpdateStrategyColumnAdapter::encode),
                 version = manga.version,
                 isSyncing = 1,
@@ -260,7 +260,7 @@ class MangaRestorer(
                 chapterFlags = manga.chapterFlags,
                 coverLastModified = manga.coverLastModified,
                 dateAdded = manga.dateAdded,
-                lastModifiedAtLocal = manga.lastModifiedAtLocal,
+                dirLastModifiedAt = manga.dirLastModifiedAt,
                 updateStrategy = manga.updateStrategy,
                 version = manga.version,
             )

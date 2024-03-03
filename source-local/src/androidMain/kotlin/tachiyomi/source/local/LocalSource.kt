@@ -139,7 +139,7 @@ actual class LocalSource(
         val mangaPage = mangaDirChunks[page - 1].map { mangaDir ->
             SManga.create().apply manga@{
                 url = mangaDir.name.toString()
-                lastModifiedAtLocal = mangaDir.lastModified()
+                dirLastModifiedAt = mangaDir.lastModified()
 
                 val localMangaList = runBlocking { getMangaList() }
                 mangaDir.name?.let { title = localMangaList[url]?.title ?: it }
@@ -161,7 +161,7 @@ actual class LocalSource(
                         val chapter = chapters.last()
 
                         // only read metadata from disk if it the mangaDir has been modified
-                        if (lastModifiedAtLocal != localMangaList[url]?.lastModifiedAt) {
+                        if (dirLastModifiedAt != localMangaList[url]?.lastModifiedAt) {
                             when (val format = getFormat(chapter)) {
                                 is Format.Directory -> getMangaDetails(this@manga)
                                 is Format.Zip -> getMangaDetails(this@manga)
@@ -429,7 +429,7 @@ actual class LocalSource(
         when (orderByLatest) {
             OrderByLatest.LATEST ->
                 includedManga = if (allMangaLoaded || isFilteredSearch) {
-                    includedManga.sortedBy { it.lastModifiedAtLocal }
+                    includedManga.sortedBy { it.dirLastModifiedAt }
                         .toMutableList()
                 } else {
                     includedManga
@@ -437,7 +437,7 @@ actual class LocalSource(
 
             OrderByLatest.OLDEST ->
                 includedManga = if (allMangaLoaded || isFilteredSearch) {
-                    includedManga.sortedByDescending { it.lastModifiedAtLocal }
+                    includedManga.sortedByDescending { it.dirLastModifiedAt }
                         .toMutableList()
                 } else {
                     includedManga

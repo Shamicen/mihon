@@ -22,7 +22,7 @@ data class MangaUpdate(
     val status: Long? = null,
     val thumbnailUrl: String? = null,
     val updateStrategy: UpdateStrategy? = null,
-    val lastModifiedAtLocal: Long? = null,
+    val dirLastModifiedAt: Long? = null,
     val initialized: Boolean? = null,
     val version: Long? = null,
 )
@@ -48,7 +48,7 @@ fun Manga.toMangaUpdate(): MangaUpdate {
         status = status,
         thumbnailUrl = thumbnailUrl,
         updateStrategy = updateStrategy,
-        lastModifiedAtLocal = lastModifiedAtLocal,
+        dirLastModifiedAt = dirLastModifiedAt,
         initialized = initialized,
         version = version,
     )
