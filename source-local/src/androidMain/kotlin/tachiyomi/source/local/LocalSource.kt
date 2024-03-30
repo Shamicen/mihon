@@ -206,7 +206,7 @@ actual class LocalSource(
         loadMangaForPage(page)
 
         while (page == currentlyLoadingPage) {
-            runBlocking { delay(200) }
+            runBlocking { delay(20) }
         }
 
         var includedManga: MutableList<SManga>
