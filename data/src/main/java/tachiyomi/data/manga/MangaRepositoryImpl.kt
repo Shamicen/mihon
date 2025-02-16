@@ -118,9 +118,9 @@ class MangaRepositoryImpl(
                 chapterFlags = manga.chapterFlags,
                 coverLastModified = manga.coverLastModified,
                 dateAdded = manga.dateAdded,
-                lastModifiedAtLocal = manga.lastModifiedAtLocal,
                 updateStrategy = manga.updateStrategy,
                 version = manga.version,
+                dirLastModifiedAt = manga.dirLastModifiedAt,
             )
             mangasQueries.selectLastInsertedRowId()
         }
@@ -169,10 +169,10 @@ class MangaRepositoryImpl(
                     coverLastModified = value.coverLastModified,
                     dateAdded = value.dateAdded,
                     mangaId = value.id,
-                    lastModifiedAtLocal = value.lastModifiedAtLocal,
                     updateStrategy = value.updateStrategy?.let(UpdateStrategyColumnAdapter::encode),
                     version = value.version,
                     isSyncing = 0,
+                    dirLastModifiedAt = value.dirLastModifiedAt,
                 )
             }
         }

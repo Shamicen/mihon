@@ -27,11 +27,11 @@ object MangaMapper {
         updateStrategy: UpdateStrategy,
         calculateInterval: Long,
         lastModifiedAt: Long,
-        lastModifiedAtLocal: Long?,
         favoriteModifiedAt: Long?,
         version: Long,
         @Suppress("UNUSED_PARAMETER")
         isSyncing: Long,
+        dirLastModifiedAt: Long?,
     ): Manga = Manga(
         id = id,
         source = source,
@@ -54,9 +54,9 @@ object MangaMapper {
         updateStrategy = updateStrategy,
         initialized = initialized,
         lastModifiedAt = lastModifiedAt,
-        lastModifiedAtLocal = lastModifiedAtLocal,
         favoriteModifiedAt = favoriteModifiedAt,
         version = version,
+        dirLastModifiedAt = dirLastModifiedAt,
     )
 
     fun mapLibraryManga(
@@ -81,10 +81,10 @@ object MangaMapper {
         updateStrategy: UpdateStrategy,
         calculateInterval: Long,
         lastModifiedAt: Long,
-        lastModifiedAtLocal: Long?,
         favoriteModifiedAt: Long?,
         version: Long,
         isSyncing: Long,
+        dirLastModifiedAt: Long?,
         totalCount: Long,
         readCount: Double,
         latestUpload: Long,
@@ -115,10 +115,10 @@ object MangaMapper {
             updateStrategy,
             calculateInterval,
             lastModifiedAt,
-            lastModifiedAtLocal,
             favoriteModifiedAt,
             version,
             isSyncing,
+            dirLastModifiedAt,
         ),
         category = category,
         totalChapters = totalCount,

@@ -126,10 +126,10 @@ class MangaRestorer(
                 coverLastModified = manga.coverLastModified,
                 dateAdded = manga.dateAdded,
                 mangaId = manga.id,
-                dirLastModifiedAt = manga.dirLastModifiedAt,
                 updateStrategy = manga.updateStrategy.let(UpdateStrategyColumnAdapter::encode),
                 version = manga.version,
                 isSyncing = 1,
+                dirLastModifiedAt = manga.dirLastModifiedAt,
             )
         }
         return manga
@@ -260,9 +260,9 @@ class MangaRestorer(
                 chapterFlags = manga.chapterFlags,
                 coverLastModified = manga.coverLastModified,
                 dateAdded = manga.dateAdded,
-                dirLastModifiedAt = manga.dirLastModifiedAt,
                 updateStrategy = manga.updateStrategy,
                 version = manga.version,
+                dirLastModifiedAt = manga.dirLastModifiedAt,
             )
             mangasQueries.selectLastInsertedRowId()
         }

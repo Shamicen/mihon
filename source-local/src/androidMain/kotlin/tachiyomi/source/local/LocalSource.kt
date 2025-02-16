@@ -12,8 +12,8 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.util.lang.compareToCaseInsensitiveNaturalOrder
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import logcat.LogPriority
@@ -22,17 +22,17 @@ import mihon.core.archive.epubReader
 import nl.adaptivity.xmlutil.core.AndroidXmlReader
 import nl.adaptivity.xmlutil.serialization.XML
 import tachiyomi.core.common.i18n.stringResource
-import tachiyomi.core.metadata.comicinfo.COMIC_INFO_FILE
-import tachiyomi.core.metadata.comicinfo.ComicInfo
-import tachiyomi.core.metadata.comicinfo.copyFromComicInfo
-import tachiyomi.core.metadata.comicinfo.getComicInfo
-import tachiyomi.core.metadata.tachiyomi.MangaDetails
 import tachiyomi.core.common.storage.extension
 import tachiyomi.core.common.storage.nameWithoutExtension
-import tachiyomi.core.common.storage.openReadOnlyChannel
 import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.core.common.util.system.ImageUtil
 import tachiyomi.core.common.util.system.logcat
+import tachiyomi.core.metadata.comicinfo.COMIC_INFO_FILE
+import tachiyomi.core.metadata.comicinfo.ComicInfo
+import tachiyomi.core.metadata.comicinfo.ComicInfoPublishingStatus
+import tachiyomi.core.metadata.comicinfo.copyFromComicInfo
+import tachiyomi.core.metadata.comicinfo.getComicInfo
+import tachiyomi.core.metadata.tachiyomi.MangaDetails
 import tachiyomi.domain.chapter.service.ChapterRecognition
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.repository.MangaRepository
@@ -58,10 +58,11 @@ import tachiyomi.source.local.io.Format
 import tachiyomi.source.local.io.LocalSourceFileSystem
 import tachiyomi.source.local.metadata.fillMetadata
 import uy.kohesive.injekt.injectLazy
+import java.io.File
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
-import kotlin.time.Duration.Companion.days
 import tachiyomi.domain.source.model.Source as DomainSource
+
 
 actual class LocalSource(
     private val context: Context,
@@ -91,8 +92,11 @@ actual class LocalSource(
     private var allMangaLoaded = false
     private var isFilteredSearch = false
 
-    private val POPULAR_FILTERS = FilterList(OrderBy.Popular(context))
-    private val LATEST_FILTERS = FilterList(OrderBy.Latest(context))
+    @Suppress("PrivatePropertyName")
+    private val PopularFilters = FilterList(OrderBy.Popular(context))
+
+    @Suppress("PrivatePropertyName")
+    private val LatestFilters = FilterList(OrderBy.Latest(context))
 
     override val name: String = context.stringResource(MR.strings.local_source)
 
@@ -164,9 +168,8 @@ actual class LocalSource(
                         if (dirLastModifiedAt != dbManga[url]?.dirLastModifiedAt) {
                             when (val format = getFormat(chapter)) {
                                 is Format.Directory -> getMangaDetails(this@manga)
-                                is Format.Zip -> getMangaDetails(this@manga)
-                                is Format.Rar -> getMangaDetails(this@manga)
-                                is Format.Epub -> EpubFile(format.file.openReadOnlyChannel(context)).use { epub ->
+                                is Format.Archive -> getMangaDetails(this@manga)
+                                is Format.Epub -> format.file.epubReader(context).use { epub ->
                                     epub.fillMetadata(this@manga, chapter)
                                 }
                             }
@@ -212,13 +215,13 @@ actual class LocalSource(
         var includedManga: MutableList<SManga>
 
         var orderByPopular =
-            if (filters === POPULAR_FILTERS) {
+            if (filters === PopularFilters) {
                 OrderByPopular.POPULAR_ASCENDING
             } else {
                 OrderByLatest.NOT_SET
             }
         var orderByLatest =
-            if (filters === LATEST_FILTERS) {
+            if (filters === LatestFilters) {
                 OrderByLatest.LATEST
             } else {
                 OrderByLatest.NOT_SET
@@ -718,8 +721,8 @@ actual class LocalSource(
         try {
             val (mangaDirName, chapterName) = chapter.url.split('/', limit = 2)
             return fileSystem.getBaseDirectory()
-                ?.findFile(mangaDirName, true)
-                ?.findFile(chapterName, true)
+                ?.findFile(mangaDirName)
+                ?.findFile(chapterName)
                 ?.let(Format.Companion::valueOf)
                 ?: throw Exception(context.stringResource(MR.strings.chapter_not_found))
         } catch (e: Format.UnknownFormatException) {
